@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 function CreateIncident() {
     const navigate = useNavigate();
 
-    // ✅ Updated state: only include fields needed for ServiceNow
+
     const [newIncident, setNewIncident] = useState({
         short_description: "",
         urgency: "",
@@ -75,7 +75,7 @@ function CreateIncident() {
                 Add Incident
             </Typography>
 
-            {/* Description */}
+
             <FormControl fullWidth margin="normal" variant="standard">
                 <InputLabel htmlFor="short_description" required>
                     Description
@@ -90,7 +90,7 @@ function CreateIncident() {
                 />
             </FormControl>
 
-            {/* Urgency */}
+
             <FormControl fullWidth margin="normal" variant="standard">
                 <InputLabel htmlFor="urgency" required>
                     Urgency
@@ -108,7 +108,7 @@ function CreateIncident() {
                 </Select>
             </FormControl>
 
-            {/* Impact */}
+
             <FormControl fullWidth margin="normal" variant="standard">
                 <InputLabel htmlFor="impact" required>
                     Impact
@@ -126,7 +126,7 @@ function CreateIncident() {
                 </Select>
             </FormControl>
 
-            {/* Buttons */}
+
             <Box sx={{ textAlign: "center", mt: 3 }}>
                 <Button variant="contained" color="primary" type="submit">
                     Submit
