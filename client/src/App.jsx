@@ -6,7 +6,7 @@ import NotFound from "./NotFound.jsx";
 import styles from "./App.module.css";
 import { AuthContext } from "./AuthProvider.jsx";
 import { useContext } from "react";
-
+import CreateIncident from "./CreateIncident.jsx";
 function App() {
   function Layout() {
     const { isLogged, logout, login } = useContext(AuthContext);
@@ -54,6 +54,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/create-incident" element={<CreateIncident />} />
         </Route>
       </Routes>
     </>

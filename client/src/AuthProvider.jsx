@@ -26,19 +26,24 @@ export function AuthProvider({ children }) {
 
   const reload = useCallback(async () => {
     setChecking(true);
-    const r = await axios.get('http://localhost:3001/auth/status', {
-      withCredentials: true
-    });
-    setIsLogged(Boolean(r.data.authenticated));
-  }, [])
+    try {
+      const r = await axios.get("http://localhost:3001/auth/status", {
+        withCredentials: true,
+      });
+      setIsLogged(Boolean(r.data.authenticated));
+    } finally {
+      setChecking(false);
+    }
+  }, []);
 
   useEffect(() => {
     reload();
-  }, [reload])
+  }, [reload]);
 
   return (
-    <AuthContext.Provider value={{ isLogged, checking, login, logout }}>
+    <AuthContext.Provider value={{ isLogged, checking, login, reload, logout }}>
       {children}
     </AuthContext.Provider>
+
   );
 }

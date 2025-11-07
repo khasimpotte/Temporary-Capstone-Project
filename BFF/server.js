@@ -93,71 +93,101 @@ app.get("/auth/callback", async (req, res) => {
   res.redirect("http://localhost:5173/");
 });
 
-app.get('/auth/status', (req, res) => {
-
+app.get("/auth/status", (req, res) => {
   const sid = req.cookies.sid;
   const session = tokenStore.get(sid);
-  if (!session || !session.access_token) return res.json({ authenticated: false });
+  if (!session || !session.access_token)
+    return res.json({ authenticated: false });
   return res.json({ authenticated: true });
 });
 
-app.get('/auth/logout', (req, res) => {
-
+app.get("/auth/logout", (req, res) => {
   const sid = req.cookies.sid;
   if (sid) {
     tokenStore.delete(sid);
-    res.clearCookie('sid', { path: '/' })
+    res.clearCookie("sid", { path: "/" });
   }
-
   res.json({ ok: true });
+});
 
-})
-
-
-app.get('/api/incidents', async (req, res) => {
-
+app.get("/api/incidents", async (req, res) => {
   const sid = req.cookies.sid;
   const session = tokenStore.get(sid);
 
-  if (!session.access_token) return res.status(401).send('Not authenticated');
+  if (!session.access_token) return res.status(401).send("Not authenticated");
 
   try {
-    const r = await axios.get(`${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=sys_id%2Cnumber%2Cstate%2Cpriority%2Cshort_description`, {
-      headers: { Authorization: `Bearer ${session.access_token}` }
-    });
+    const r = await axios.get(
+      `${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=sys_id%2Cnumber%2Cstate%2Cpriority%2Cshort_description`,
+      {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }
+    );
     res.json(r.data);
   } catch (e) {
-
-
     if (e.response.status == 401 && session.refresh_token) {
-
       const data = {
         grant_type: "refresh_token",
         refresh_token: session.refresh_token,
-        client_id: CLIENT_ID
-      }
+        client_id: CLIENT_ID,
+      };
 
       try {
-        const refresh = await axios.post(tokenEndpoint, stringify(data),
-          { headers: { "content-type": "application/x-www-form-urlencoded" } }
-        );
-
-        tokenStore.set(sid, { ...session, ...refresh.data })
-
-        const retry = await axios.get(`${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=number%2Cstate%2Cpriority%2Cshort_description`, {
-          headers: { Authorization: `Bearer ${session.access_token}` }
+        const refresh = await axios.post(tokenEndpoint, stringify(data), {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
         });
-        res.json(r.data);
 
+        tokenStore.set(sid, { ...session, ...refresh.data });
+
+        const retry = await axios.get(
+          `${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=number%2Cstate%2Cpriority%2Cshort_description`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        );
+        res.json(r.data);
       } catch (e) {
-        res.status(401).send('Session Expired');
+        res.status(401).send("Session Expired");
       }
-      res.status(e.response.status || 500).send('Upstream error');
+      res.status(e.response.status || 500).send("Upstream error");
     }
   }
+});
 
 
 
+
+app.post("/api/incidents", async (req, res) => {
+  const sid = req.cookies.sid;
+  const session = tokenStore.get(sid);
+
+  if (!session || !session.access_token) {
+    return res.status(401).send("Not authenticated");
+  }
+
+  const { short_description, urgency, impact } = req.body;
+
+  try {
+    const response = await axios.post(
+      `${SN_INTANCE}/api/now/table/incident`,
+      {
+        short_description,
+        urgency,
+        impact,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({ message: "Incident created successfully", result: response.data });
+  } catch (error) {
+    console.error("Error creating incident:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to create incident" });
+  }
 });
 
 
