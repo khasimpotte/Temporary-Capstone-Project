@@ -317,14 +317,4 @@ app.put("/api/incidents/:sys_id", async (req, res) => {
 });
 
 
-
-
-
-
-
-
-
-
-
-
 app.listen(3001, () => console.log("BFF on 3001"));
