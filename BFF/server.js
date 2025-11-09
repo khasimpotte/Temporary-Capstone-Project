@@ -19,13 +19,12 @@ app.use(
 );
 
 const REDIRECT_URI = process.env.REDIRECT_URI;
-const SN_INTANCE = process.env.SN_INTANCE;
+const SN_INSTANCE = process.env.SN_INSTANCE;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const authEndpoint = `${SN_INTANCE}/oauth_auth.do`;
-const tokenEndpoint = `${SN_INTANCE}/oauth_token.do`;
+const authEndpoint = `${SN_INSTANCE}/oauth_auth.do`;
+const tokenEndpoint = `${SN_INSTANCE}/oauth_token.do`;
 
-// in real-life we would use Redis here
 const tokenStore = new Map();
 
 function base64url(buf) {
@@ -118,7 +117,7 @@ app.get("/api/incidents", async (req, res) => {
 
   try {
     const r = await axios.get(
-      `${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=sys_id%2Cnumber%2Cstate%2Cpriority%2Cshort_description`,
+      `${SN_INSTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=sys_id%2Cnumber%2Cstate%2Cpriority%2Cshort_description`,
       {
         headers: { Authorization: `Bearer ${session.access_token}` },
       }
@@ -140,7 +139,7 @@ app.get("/api/incidents", async (req, res) => {
         tokenStore.set(sid, { ...session, ...refresh.data });
 
         const retry = await axios.get(
-          `${SN_INTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=number%2Cstate%2Cpriority%2Cshort_description`,
+          `${SN_INSTANCE}/api/now/table/incident?sysparm_display_value=true&sysparm_fields=number%2Cstate%2Cpriority%2Cshort_description`,
           {
             headers: { Authorization: `Bearer ${session.access_token}` },
           }
@@ -169,7 +168,7 @@ app.post("/api/incidents", async (req, res) => {
 
   try {
     const response = await axios.post(
-      `${SN_INTANCE}/api/now/table/incident`,
+      `${SN_INSTANCE}/api/now/table/incident`,
       {
         short_description,
         urgency,
@@ -189,6 +188,143 @@ app.post("/api/incidents", async (req, res) => {
     res.status(500).json({ error: "Failed to create incident" });
   }
 });
+
+
+
+app.delete("/api/incidents/:sys_id", async (req, res) => {
+  const sid = req.cookies.sid;
+  const session = tokenStore.get(sid);
+
+  if (!session || !session.access_token) {
+    return res.status(401).send("Not authenticated");
+  }
+
+  const { sys_id } = req.params;
+
+  try {
+    const response = await axios.delete(
+      `${SN_INSTANCE}/api/now/table/incident/${sys_id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    );
+
+    res.json({
+      message: "Incident deleted successfully",
+      result: response.data,
+    });
+  } catch (error) {
+
+    if (error.response?.status === 401 && session.refresh_token) {
+      try {
+        const data = {
+          grant_type: "refresh_token",
+          refresh_token: session.refresh_token,
+          client_id: CLIENT_ID,
+        };
+
+        const refresh = await axios.post(tokenEndpoint, stringify(data), {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+
+        tokenStore.set(sid, { ...session, ...refresh.data });
+
+        const retry = await axios.delete(
+          `${SN_INSTANCE}/api/now/table/incident/${sys_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${refresh.data.access_token}`,
+            },
+          }
+        );
+
+        return res.json({
+          message: "Incident deleted successfully (after token refresh)",
+          result: retry.data,
+        });
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError.message);
+        return res.status(401).json({ error: "Session expired" });
+      }
+    }
+
+    console.error("Error deleting incident:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to delete incident" });
+  }
+});
+
+app.get("/api/incidents/:sys_id", async (req, res) => {
+  const sid = req.cookies.sid;
+  const session = tokenStore.get(sid);
+
+  if (!session || !session.access_token) {
+    return res.status(401).send("Not authenticated");
+  }
+
+  const { sys_id } = req.params;
+
+  try {
+    const response = await axios.get(
+      `${SN_INSTANCE}/api/now/table/incident/${sys_id}?sysparm_display_value=true`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching incident:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch incident" });
+  }
+});
+
+
+app.put("/api/incidents/:sys_id", async (req, res) => {
+  const sid = req.cookies.sid;
+  const session = tokenStore.get(sid);
+
+  if (!session || !session.access_token) {
+    return res.status(401).send("Not authenticated");
+  }
+
+  const { sys_id } = req.params;
+  const { short_description, urgency, impact } = req.body;
+
+  try {
+    const response = await axios.put(
+      `${SN_INSTANCE}/api/now/table/incident/${sys_id}`,
+      { short_description, urgency, impact },
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({
+      message: "Incident updated successfully",
+      result: response.data,
+    });
+  } catch (error) {
+    console.error("Error updating incident:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to update incident" });
+  }
+});
+
+
+
+
+
+
+
+
+
+
 
 
 app.listen(3001, () => console.log("BFF on 3001"));

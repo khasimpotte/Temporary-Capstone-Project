@@ -8,36 +8,64 @@ import {
     MenuItem,
     Button,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-function CreateIncident() {
+function EditIncident() {
     const navigate = useNavigate();
+    const { sys_id } = useParams();
 
-    const [newIncident, setNewIncident] = useState({
+    const [incident, setIncident] = useState({
+        number: "",
         short_description: "",
         urgency: "",
         impact: "",
     });
 
+    useEffect(() => {
+        async function fetchIncident() {
+            try {
+                const res = await axios.get(`http://localhost:3001/api/incidents/${sys_id}`, {
+                    withCredentials: true,
+                });
+
+                const data = res.data.result;
+                setIncident({
+                    number: data.number || "",
+                    short_description: data.short_description || "",
+                    urgency: data.urgency.value || "",
+                    impact: data.impact.value || "",
+                });
+            } catch (error) {
+                console.error("Error fetching incident:", error);
+                alert("Failed to load incident details.");
+            }
+        }
+        fetchIncident();
+    }, [sys_id]);
+
+
+
+
+
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setNewIncident((prev) => ({ ...prev, [name]: value }));
+        setIncident((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
-            await axios.post("http://localhost:3001/api/incidents", newIncident, {
+            await axios.put(`http://localhost:3001/api/incidents/${sys_id}`, incident, {
                 withCredentials: true,
             });
-            alert("Incident created successfully!");
+            alert("Incident updated successfully!");
             navigate("/");
         } catch (err) {
-            console.error(err);
-            alert("Error creating incident.");
+            console.error("Error updating incident:", err);
+            alert("Failed to update incident.");
         }
     };
 
@@ -71,8 +99,20 @@ function CreateIncident() {
                     },
                 }}
             >
-                Add Incident
+                Edit Incident
             </Typography>
+
+
+            <FormControl fullWidth margin="normal" variant="standard">
+                <InputLabel htmlFor="number">Incident Number</InputLabel>
+                <Input
+                    id="number"
+                    name="number"
+                    value={incident.number}
+                    readOnly
+                    disabled
+                />
+            </FormControl>
 
 
             <FormControl fullWidth margin="normal" variant="standard">
@@ -82,9 +122,8 @@ function CreateIncident() {
                 <Input
                     id="short_description"
                     name="short_description"
-                    value={newIncident.short_description}
+                    value={incident.short_description}
                     onChange={handleChange}
-                    placeholder="Server issue"
                     required
                 />
             </FormControl>
@@ -97,7 +136,7 @@ function CreateIncident() {
                 <Select
                     id="urgency"
                     name="urgency"
-                    value={newIncident.urgency}
+                    value={incident.urgency}
                     onChange={handleChange}
                     required
                 >
@@ -115,7 +154,7 @@ function CreateIncident() {
                 <Select
                     id="impact"
                     name="impact"
-                    value={newIncident.impact}
+                    value={incident.impact}
                     onChange={handleChange}
                     required
                 >
@@ -128,7 +167,7 @@ function CreateIncident() {
 
             <Box sx={{ textAlign: "center", mt: 3 }}>
                 <Button variant="contained" color="primary" type="submit">
-                    Submit
+                    Update
                 </Button>
                 <Button
                     variant="outlined"
@@ -143,4 +182,4 @@ function CreateIncident() {
     );
 }
 
-export default CreateIncident;
+export default EditIncident;

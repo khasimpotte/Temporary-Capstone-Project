@@ -8,9 +8,9 @@ import { AuthProvider } from './AuthProvider.jsx'
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
-    primary: { main: '#1976d2' },
-    secondary: { main: '#7948ecff' }
+    mode:'light',
+    primary: { main: '#1976d2'},
+    secondary: { main: '#7948ecff'}
   }
 });
 
@@ -19,7 +19,7 @@ const theme = createTheme({
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
           <App />

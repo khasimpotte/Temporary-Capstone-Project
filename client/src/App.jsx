@@ -7,6 +7,8 @@ import styles from "./App.module.css";
 import { AuthContext } from "./AuthProvider.jsx";
 import { useContext } from "react";
 import CreateIncident from "./CreateIncident.jsx";
+import EditIncident from "./EditIncident.jsx";
+
 function App() {
   function Layout() {
     const { isLogged, logout, login } = useContext(AuthContext);
@@ -15,7 +17,17 @@ function App() {
       <>
         <AppBar>
           <Toolbar sx={{ justifyContent: "space-between" }}>
-            <Typography>Company Name</Typography>
+
+            <Box component="img"
+              src="src/images/revature_logo.png"
+              alt="Company Logo"
+              sx={{
+                height: 40,
+                width: "auto",
+              }}
+            />
+
+
 
             {isLogged ? (
               <>
@@ -55,6 +67,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/create-incident" element={<CreateIncident />} />
+          <Route path="/edit-incident/:sys_id" element={<EditIncident />} />
         </Route>
       </Routes>
     </>

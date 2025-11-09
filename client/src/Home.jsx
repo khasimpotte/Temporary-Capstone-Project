@@ -1,10 +1,9 @@
 import {
-  Stack, Box,
+  Box,
   Typography,
   Button,
   Card,
   CardContent,
-  Grid,
   CardActions,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
@@ -39,7 +38,7 @@ export default function Home() {
       {isLogged && incidents ? (
 
 
-        <Box fullwidth sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="h5">Incident Records:</Typography>
             <Button variant="contained" size="small" onClick={() => navigate("/create-incident")}>
@@ -52,62 +51,82 @@ export default function Home() {
             gap: 2
           }}>
 
-            {incidents.map((inc, index) => {
-              return (
-                <>
-                  <Card key={inc.sys_id}
-                    variant="outlined"
-                    sx={{
-                      maxWidth: 320,
-                      width: '100%',
-                      height: '100%',
-                      mx: 'auto',
-                      my: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      borderRadius: 2, backgroundColor: 'rgba(234, 224, 219, 0.49)'
+            {incidents.map((inc) => (
+              <Card
+                key={inc.sys_id}
+                variant="outlined"
+                sx={{
+                  maxWidth: 320,
+                  width: "100%",
+                  height: "100%",
+                  mx: "auto",
+                  my: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  borderRadius: 2,
+                  backgroundColor: "rgba(234, 224, 219, 0.49)",
+                }}
+              >
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="h6" align="center">
+                    <strong>Incident : </strong> {inc.number}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Description : </strong>
+                    {inc.short_description}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>State : </strong>
+                    {inc.state}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Priority : </strong>
+                    {inc.priority}
+                  </Typography>
+                </CardContent>
+
+                <CardActions sx={{ justifyContent: "center", pb: 2, pt: 0 }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => navigate(`/edit-incident/${inc.sys_id}`)}
+                  >
+                    Edit
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={async () => {
+                      if (window.confirm("Are you sure you want to delete this incident?")) {
+                        try {
+                          await axios.delete(
+                            `http://localhost:3001/api/incidents/${inc.sys_id}`,
+                            { withCredentials: true }
+                          );
+                          alert("Incident deleted successfully!");
+                          setIncidents((prev) =>
+                            prev.filter((i) => i.sys_id !== inc.sys_id)
+                          );
+                        } catch (err) {
+                          console.error(err);
+                          alert("Failed to delete incident.");
+                        }
+                      }
                     }}
                   >
-                    <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Typography variant="h6" align="center"><strong>Incident : </strong> {inc.number}</Typography>
-                      <Typography variant="body2"><strong>Description : </strong>{inc.short_description} </Typography>
-                      <Typography variant="body2"><strong>State : </strong>{inc.state} </Typography>
-                      <Typography variant="body2"><strong>Priority : </strong>{inc.priority} </Typography>
-                    </CardContent>
+                    Delete
+                  </Button>
+                </CardActions>
+              </Card>
+            ))}
 
-                    <CardActions sx={{ justifyContent: 'center', pb: 2, pt: 0 }}>
-                      <Button variant="contained" color="success" size="small">
-                        Edit
-                      </Button>
-
-
-                      <Button variant="contained" color="error" size="small">
-                        Delete
-                      </Button>
-                    </CardActions>
-                  </Card>
-
-
-
-
-
-
-
-                </>
-              );
-            })}
 
           </Box>
         </Box>
-
-
-
-
-
-
-
-
 
 
       ) : (
