@@ -28,7 +28,7 @@ function App() {
 
     return (
       <>
-        <AppBar position="static">
+        <AppBar position="fixed">
           <Toolbar sx={{ justifyContent: "space-between", alignItems: "center" }}>
 
             <Box
