@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardActions,
+  TextField,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "./AuthProvider";
@@ -12,10 +13,10 @@ import axios from "axios";
 
 import { useNavigate } from "react-router-dom";
 
-
 export default function Home() {
   const { isLogged } = useContext(AuthContext);
   const [incidents, setIncidents] = useState([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function fetchData() {
@@ -33,25 +34,44 @@ export default function Home() {
 
   const navigate = useNavigate();
 
+  const filteredIncidents = incidents.filter((inc) =>
+    inc.number.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       {isLogged && incidents ? (
-
-
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
             <Typography variant="h5">Incident Records:</Typography>
-            <Button variant="contained" size="small" onClick={() => navigate("/create-incident")}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => navigate("/create-incident")}
+            >
               Create New
             </Button>
           </Box>
-          <Box sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr  1fr 1fr 1fr' },
-            gap: 2
-          }}>
 
-            {incidents.map((inc) => (
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              label="Search by Incident Number"
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
+              gap: 2,
+            }}
+          >
+            {filteredIncidents.map((inc) => (
               <Card
                 key={inc.sys_id}
                 variant="outlined"
@@ -73,16 +93,13 @@ export default function Home() {
                     <strong>Incident : </strong> {inc.number}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Description : </strong>
-                    {inc.short_description}
+                    <strong>Description : </strong> {inc.short_description}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>State : </strong>
-                    {inc.state}
+                    <strong>State : </strong> {inc.state}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Priority : </strong>
-                    {inc.priority}
+                    <strong>Priority : </strong> {inc.priority}
                   </Typography>
                 </CardContent>
 
@@ -101,7 +118,11 @@ export default function Home() {
                     color="error"
                     size="small"
                     onClick={async () => {
-                      if (window.confirm("Are you sure you want to delete this incident?")) {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to delete this incident?"
+                        )
+                      ) {
                         try {
                           await axios.delete(
                             `http://localhost:3001/api/incidents/${inc.sys_id}`,
@@ -123,16 +144,11 @@ export default function Home() {
                 </CardActions>
               </Card>
             ))}
-
-
           </Box>
         </Box>
-
-
       ) : (
         <Typography>Please log in</Typography>
-      )
-      }
+      )}
     </>
   );
 }
