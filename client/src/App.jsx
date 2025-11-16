@@ -2,7 +2,6 @@ import { AppBar, Toolbar, Typography, Container, Box, Button, CssBaseline } from
 import { Link, Routes, Route, Outlet } from "react-router-dom";
 import Home from "./Home.jsx";
 import About from "./About.jsx";
-import NotFound from "./NotFound.jsx";
 import styles from "./App.module.css";
 import { AuthContext } from "./AuthProvider.jsx";
 import { useContext, useState, useMemo } from "react";
@@ -46,9 +45,6 @@ function App() {
                 </Link>
                 <Link className={styles.link} to="/about">
                   About
-                </Link>
-                <Link className={styles.link} to="/does-not-exist">
-                  404 Test
                 </Link>
 
                 <Link
@@ -94,7 +90,6 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="*" element={<NotFound />} />
           <Route path="/create-incident" element={<CreateIncident />} />
           <Route path="/edit-incident/:sys_id" element={<EditIncident />} />
         </Route>
