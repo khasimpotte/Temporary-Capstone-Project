@@ -13,15 +13,12 @@ import EditIncident from "./EditIncident.jsx";
 function App() {
   const [darkMode, setDarkMode] = useState(false);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: darkMode ? "dark" : "light",
-        },
-      }),
-    [darkMode]
-  );
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? "dark" : "light",
+    },
+  });
+
 
   function Layout() {
     const { isLogged, logout, login } = useContext(AuthContext);

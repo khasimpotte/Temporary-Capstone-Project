@@ -6,17 +6,24 @@ import {
   CardContent,
   CardActions,
   TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "./AuthProvider";
 import axios from "axios";
-
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const { isLogged } = useContext(AuthContext);
   const [incidents, setIncidents] = useState([]);
-  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+
+  const [filterField, setFilterField] = useState("");
+  const [filterValue, setFilterValue] = useState("");
+  const [filteredIncidents, setFilteredIncidents] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -26,22 +33,70 @@ export default function Home() {
           { withCredentials: true }
         );
         setIncidents(incidentList.data.result);
+        setFilteredIncidents(incidentList.data.result);
       }
     }
-
     fetchData();
   }, [isLogged]);
 
-  const navigate = useNavigate();
 
-  const filteredIncidents = incidents.filter((inc) =>
-    inc.number.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSearch = () => {
+    if (!filterField || !filterValue) {
+      setFilteredIncidents(incidents);
+      return;
+    }
+
+    const result = incidents.filter((inc) =>
+      String(inc[filterField]).toLowerCase().includes(filterValue.toLowerCase())
+    );
+
+    setFilteredIncidents(result);
+  };
+
+  const handleReset = () => {
+    setFilterField("");
+    setFilterValue("");
+    setFilteredIncidents(incidents);
+  };
 
   return (
     <>
       {isLogged && incidents ? (
         <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filter By</InputLabel>
+              <Select
+                value={filterField}
+                label="Filter By"
+                onChange={(e) => setFilterField(e.target.value)}
+              >
+                <MenuItem value="number">Incident Number</MenuItem>
+                <MenuItem value="priority">Priority</MenuItem>
+                <MenuItem value="state">State</MenuItem>
+                <MenuItem value="short_description">Short Description</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Enter Value"
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+              disabled={!filterField}
+            />
+
+            <Button variant="contained" color="primary" onClick={handleSearch}>
+              Search
+            </Button>
+
+            <Button variant="outlined" color="secondary" onClick={handleReset}>
+              Reset
+            </Button>
+          </Box>
+
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
             <Typography variant="h5">Incident Records:</Typography>
             <Button
@@ -53,21 +108,15 @@ export default function Home() {
             </Button>
           </Box>
 
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              label="Search by Incident Number"
-              variant="outlined"
-              size="small"
-              fullWidth
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </Box>
 
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "1fr 1fr 1fr 1fr",
+              },
               gap: 2,
             }}
           >
@@ -118,11 +167,7 @@ export default function Home() {
                     color="error"
                     size="small"
                     onClick={async () => {
-                      if (
-                        window.confirm(
-                          "Are you sure you want to delete this incident?"
-                        )
-                      ) {
+                      if (window.confirm("Are you sure you want to delete this incident?")) {
                         try {
                           await axios.delete(
                             `http://localhost:3001/api/incidents/${inc.sys_id}`,
@@ -130,6 +175,9 @@ export default function Home() {
                           );
                           alert("Incident deleted successfully!");
                           setIncidents((prev) =>
+                            prev.filter((i) => i.sys_id !== inc.sys_id)
+                          );
+                          setFilteredIncidents((prev) =>
                             prev.filter((i) => i.sys_id !== inc.sys_id)
                           );
                         } catch (err) {
